@@ -115,7 +115,8 @@ bool SequentialSfMReconstructionEngine::Process() {
 
   // Initial pair Essential Matrix and [R|t] estimation.
   if (!MakeInitialPair3D(initial_pair_))
-    return false;
+    if (!MakeInitialTriplet3D(initial_pair_))
+      return false;
 
   // Compute robust Resection of remaining images
   // - group of images will be selected and resection + scene completion will be tried
