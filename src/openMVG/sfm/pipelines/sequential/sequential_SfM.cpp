@@ -118,6 +118,14 @@ bool SequentialSfMReconstructionEngine::Process() {
     if (!MakeInitialTriplet3D(initial_pair_))
       return false;
 
+  // Future:
+  /*
+  if (!MakeInitialTriplet3D(initial_pair_))
+    if (!MakeInitialPair3D(initial_pair_))
+      return false;
+      */
+  
+
   // Compute robust Resection of remaining images
   // - group of images will be selected and resection + scene completion will be tried
   size_t resectionGroupIndex = 0;
@@ -976,6 +984,7 @@ bool SequentialSfMReconstructionEngine::Resection(const uint32_t viewIndex)
     html_doc_stream_->pushInfo(os.str());
   }
 
+  // XXX: if fail, insert P2Pt
   if (!bResection)
     return false;
 
