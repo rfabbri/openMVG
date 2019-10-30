@@ -99,6 +99,7 @@ bool SequentialSfMReconstructionEngine::Process() {
   if (!InitLandmarkTracks())
     return false;
 
+  // XXX Trifocal
   // Initial pair choice
   if (initial_pair_ == Pair(0,0))
   {
@@ -115,9 +116,10 @@ bool SequentialSfMReconstructionEngine::Process() {
 
   // Initial pair Essential Matrix and [R|t] estimation.
   if (!MakeInitialPair3D(initial_pair_))
-    if (!MakeInitialTriplet3D(initial_pair_))
+  // XXX Trifocal  if (!MakeInitialTriplet3D(initial_pair_))
       return false;
 
+  // XXX Trifocal
   // Future:
   /*
   if (!MakeInitialTriplet3D(initial_pair_))
@@ -136,7 +138,7 @@ bool SequentialSfMReconstructionEngine::Process() {
     // Add images to the 3D reconstruction
     for (const auto & iter : vec_possible_resection_indexes)
     {
-      bImageAdded |= Resection(iter);
+      bImageAdded |= Resection(iter);  // XXX P2Pt
       set_remaining_view_id_.erase(iter);
     }
 
