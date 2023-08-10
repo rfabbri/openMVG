@@ -656,10 +656,10 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
     std::cout << "passed BA\n";
   } // !badj
   // Save computed data
-  Pose3 *pose[nviews];
+  Pose3 pose[nviews];
   for (unsigned v = 0; v < nviews; ++v)  {
     sfm_data_.poses[view[v]->id_pose] = tiny_scene.poses[view[v]->id_pose];
-    pose[v] = &sfm_data_.poses[view[v]->id_pose];
+    pose[v] = sfm_data_.poses[view[v]->id_pose];
     map_ACThreshold_.insert({t[v], relativePose_info.found_residual_precision});
     set_remaining_view_id_.erase(view[v]->id_view);
   }
@@ -681,7 +681,7 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
     for (unsigned v = 0; v < nviews; ++v) {
       iterObs_x[v] = obs.find(view[v]->id_view);
       ob_x[v] = &iterObs_x[v]->second;
-      ob_x_ud[v] = cam[v]->get_ud_pixel(ob_x[v]->x);
+      ob_x_ud[v] = cam[v]->get_d_pixel(ob_x[v]->x);
 
       OPENMVG_LOG_INFO << "\tPoint in view " << v << " view id " << view[v]->id_view << " " << ob_x[v] << " = " << ob_x_ud[v] << std::endl;
     }
@@ -689,10 +689,10 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
     for (unsigned v0 = 0; v0 + 1 < nviews; ++v0)
       for (unsigned v1 = v0 + 1; v1 < nviews; ++v1) {
         const double angle = AngleBetweenRay(
-          *pose[v0], cam[v0], *pose[v1], cam[v1], ob_x_ud[v0], ob_x_ud[v1]);
+          pose[v0], cam[v0], pose[v1], cam[v1], ob_x_ud[v0], ob_x_ud[v1]);
         
-        const Vec2 residual_0 = cam[v0]->residual((*pose[v0])(landmark.X), ob_x[v0]->x);
-        const Vec2 residual_1 = cam[v1]->residual((*pose[v1])(landmark.X), ob_x[v1]->x);
+        const Vec2 residual_0 = cam[v0]->residual((pose[v0])(landmark.X), ob_x[v0]->x,true);
+        const Vec2 residual_1 = cam[v1]->residual((pose[v1])(landmark.X), ob_x[v1]->x,true);
 
         OPENMVG_LOG_INFO << "v0, v1 = " << v0 << ", " << v1;
         OPENMVG_LOG_INFO << "residual_0 norm " << residual_0.norm();
@@ -700,14 +700,14 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
         if (angle <= 2.0) {
           OPENMVG_LOG_INFO << "FAIL angle test with angle " << angle;
           include_landmark = false;
-        } else if (!CheiralityTest((*cam[v0])(ob_x_ud[v0]), *pose[v0],
-                            (*cam[v1])(ob_x_ud[v1]), *pose[v1], landmark.X)) {
+        } else if (!CheiralityTest((*cam[v0])(ob_x_ud[v0]), pose[v0],
+                            (*cam[v1])(ob_x_ud[v1]), pose[v1], landmark.X)) {
           OPENMVG_LOG_INFO << "FAIL Cheirality test ";
           include_landmark = false;
         } else if (residual_0.norm() >= relativePose_info.found_residual_precision ||
             residual_1.norm() >= relativePose_info.found_residual_precision) {
             OPENMVG_LOG_INFO << "FAIL residual test: " << residual_0.norm() << " " 
-              << residual_1.norm() << " both greater than " << relativePose_info.found_residual_precision;
+              << residual_1.norm() << " one of them is greater than " << relativePose_info.found_residual_precision;
           include_landmark = false;
         }
       }
@@ -1044,16 +1044,13 @@ double SequentialSfMReconstructionEngine::ComputeResidualsHistogram(Histogram<do
       vec_residuals.emplace_back( std::abs(residual(1)) );
     }
   }
-  std::cout << "2nd\n";
   // Display statistics
   if (vec_residuals.size() > 1)
   {
-    std::cout << "entered 1st if\n";
     float dMin, dMax, dMean, dMedian;
     minMaxMeanMedian<float>(vec_residuals.cbegin(), vec_residuals.cend(),
                             dMin, dMax, dMean, dMedian);
     if (histo)  {
-      std::cout << "entered 2nd if\n";
       *histo = Histogram<double>(dMin, dMax, 10);
       histo->Add(vec_residuals.cbegin(), vec_residuals.cend());
     }
