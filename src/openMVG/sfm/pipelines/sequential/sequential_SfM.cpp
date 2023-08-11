@@ -682,9 +682,9 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
     for (unsigned v = 0; v < nviews; ++v) {
       iterObs_x[v] = obs.find(view[v]->id_view);
       ob_x[v] = &iterObs_x[v]->second;
-      ob_x_ud[v] = cam[v]->get_d_pixel(ob_x[v]->x);
+      ob_x_ud[v] = cam[v]->get_ud_pixel(ob_x[v]->x);
 
-      OPENMVG_LOG_INFO << "\t\tPoint in view " << v << " view id " << view[v]->id_view << " " << ob_x[v]->x << " = " << ob_x_ud[v] << std::endl;
+      OPENMVG_LOG_INFO << "Point in view " << v << " view id " << view[v]->id_view << "\n" << ob_x[v]->x << "\n" << ob_x_ud[v] << std::endl;
     }
     bool include_landmark = true;
     for (unsigned v0 = 0; v0 + 1 < nviews; ++v0)
@@ -692,10 +692,16 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
         const double angle = AngleBetweenRay(
           pose[v0], cam[v0], pose[v1], cam[v1], ob_x_ud[v0], ob_x_ud[v1]);
         
-        const Vec2 residual_0 = cam[v0]->residual((pose[v0])(landmark.X), ob_x[v0]->x,true);
-        const Vec2 residual_1 = cam[v1]->residual((pose[v1])(landmark.X), ob_x[v1]->x,true);
+        OPENMVG_LOG_INFO << "pose[v0]landmark.X\n" << (pose[v0])(landmark.X) << std::endl;
+        OPENMVG_LOG_INFO << "pose[v1]landmark.X\n" << (pose[v1])(landmark.X) << std::endl;
+        OPENMVG_LOG_INFO << "ob_x_ud[v0]\n" << (ob_x_ud[v0]) << std::endl;
+        OPENMVG_LOG_INFO << "ob_x_ud[v1]\n" << (ob_x_ud[v1]) << std::endl;
+        const Vec2 residual_0 = cam[v0]->residual((pose[v0])(landmark.X), ob_x_ud[v0],true);
+        const Vec2 residual_1 = cam[v1]->residual((pose[v1])(landmark.X), ob_x_ud[v1],true);
 
-        OPENMVG_LOG_INFO << "v0, v1 = " << v0 << ", " << v1;
+        OPENMVG_LOG_INFO << "v0, v1 = " << v0 << ", " << v1 << std::endl;
+        OPENMVG_LOG_INFO << "residual_0 " << residual_0;
+        OPENMVG_LOG_INFO << "residual_1 " << residual_1;
         OPENMVG_LOG_INFO << "residual_0 norm " << residual_0.norm();
         OPENMVG_LOG_INFO << "residual_1 norm " << residual_1.norm();
         if (angle <= 2.0) {
