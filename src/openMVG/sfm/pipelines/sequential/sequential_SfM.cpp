@@ -58,6 +58,7 @@ SequentialSfMReconstructionEngine::SequentialSfMReconstructionEngine(
 {
   if (!sLogging_file_.empty())
   {
+    std::cout << "Initialized!\n";
     // setup HTML logger
     html_doc_stream_ = std::make_shared<htmlDocument::htmlDocumentStream>("SequentialReconstructionEngine SFM report.");
     html_doc_stream_->pushInfo(
@@ -654,7 +655,6 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
     {
       return false;
     }
-    std::cout << "passed BA\n";
   } // !badj
   // Save computed data
   Pose3 pose[nviews];
@@ -684,7 +684,7 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
       ob_x[v] = &iterObs_x[v]->second;
       ob_x_ud[v] = cam[v]->get_ud_pixel(ob_x[v]->x);
 
-      OPENMVG_LOG_INFO << "Point in view " << v << " view id " << view[v]->id_view << "\n" << ob_x[v]->x << "\n" << ob_x_ud[v] << std::endl;
+      OPENMVG_LOG_INFO << "Point in view " << v << " view id " << view[v]->id_view << "\nob_x\n" << ob_x[v]->x << "\nob_x_ud\n" << ob_x_ud[v] << std::endl;
     }
     bool include_landmark = true;
     for (unsigned v0 = 0; v0 + 1 < nviews; ++v0)
@@ -694,14 +694,12 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
         
         OPENMVG_LOG_INFO << "pose[v0]landmark.X\n" << (pose[v0])(landmark.X) << std::endl;
         OPENMVG_LOG_INFO << "pose[v1]landmark.X\n" << (pose[v1])(landmark.X) << std::endl;
-        OPENMVG_LOG_INFO << "ob_x_ud[v0]\n" << (ob_x_ud[v0]) << std::endl;
-        OPENMVG_LOG_INFO << "ob_x_ud[v1]\n" << (ob_x_ud[v1]) << std::endl;
         const Vec2 residual_0 = cam[v0]->residual((pose[v0])(landmark.X), ob_x_ud[v0],true);
         const Vec2 residual_1 = cam[v1]->residual((pose[v1])(landmark.X), ob_x_ud[v1],true);
 
         OPENMVG_LOG_INFO << "v0, v1 = " << v0 << ", " << v1 << std::endl;
-        OPENMVG_LOG_INFO << "residual_0 " << residual_0;
-        OPENMVG_LOG_INFO << "residual_1 " << residual_1;
+        //OPENMVG_LOG_INFO << "residual_0 " << residual_0;
+        //OPENMVG_LOG_INFO << "residual_1 " << residual_1;
         OPENMVG_LOG_INFO << "residual_0 norm " << residual_0.norm();
         OPENMVG_LOG_INFO << "residual_1 norm " << residual_1.norm();
         if (angle <= 2.0) {
@@ -731,6 +729,7 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
   std::cout << "computed Histogram\n";
   if (!sLogging_file_.empty())
   {
+    std::cout << "Entered!\n";
     using namespace htmlDocument;
     html_doc_stream_->pushInfo(htmlMarkup("h1","Trifocal tensor."));
     std::ostringstream os;
@@ -960,10 +959,16 @@ bool SequentialSfMReconstructionEngine::MakeInitialPair3D(const Pair & current_p
         ob_xI_ud = cam_I->get_ud_pixel(ob_xI.x),
         ob_xJ_ud = cam_J->get_ud_pixel(ob_xJ.x);
 
+      //OPENMVG_LOG_INFO << "Point in view " << "\nob_x\n" << ob_xI.x << "\nob_x_ud\n" << ob_xI_ud << std::endl;
+      //OPENMVG_LOG_INFO << "Point in view " << "\nob_x\n" << ob_xJ.x << "\nob_x_ud\n" << ob_xJ_ud << std::endl;
+      //OPENMVG_LOG_INFO << "pose_Ilandmark.X\n" << pose_I(landmark.X) << std::endl;
+      //OPENMVG_LOG_INFO << "pose_Jlandmark.X\n" << pose_J(landmark.X) << std::endl;
       const double angle = AngleBetweenRay(
         pose_I, cam_I, pose_J, cam_J, ob_xI_ud, ob_xJ_ud);
       const Vec2 residual_I = cam_I->residual(pose_I(landmark.X), ob_xI.x);
       const Vec2 residual_J = cam_J->residual(pose_J(landmark.X), ob_xJ.x);
+      //OPENMVG_LOG_INFO << "residual_I norm " << residual_I.norm();
+      //OPENMVG_LOG_INFO << "residual_J norm " << residual_J.norm();
       if (angle > 2.0 &&
           CheiralityTest((*cam_I)(ob_xI_ud), pose_I,
                          (*cam_J)(ob_xJ_ud), pose_J,
@@ -1037,7 +1042,6 @@ double SequentialSfMReconstructionEngine::ComputeResidualsHistogram(Histogram<do
   // Collect residuals for each observation
   std::vector<float> vec_residuals;
   vec_residuals.reserve(sfm_data_.structure.size());
-  std::cout << "1st\n";
   for (const auto & landmark_entry : sfm_data_.GetLandmarks())
   {
     const Observations & obs = landmark_entry.second.obs;
@@ -1054,6 +1058,7 @@ double SequentialSfMReconstructionEngine::ComputeResidualsHistogram(Histogram<do
   // Display statistics
   if (vec_residuals.size() > 1)
   {
+    std::cout << "1st\n";
     float dMin, dMax, dMean, dMedian;
     minMaxMeanMedian<float>(vec_residuals.cbegin(), vec_residuals.cend(),
                             dMin, dMax, dMean, dMedian);
@@ -1071,8 +1076,11 @@ double SequentialSfMReconstructionEngine::ComputeResidualsHistogram(Histogram<do
       << "\n\t-- Residual mean:\t " << dMean;
 
     return dMean;
+  } else 
+  {
+    OPENMVG_LOG_INFO << "No residuals were found!\n";
+    return -1.0;
   }
-  return -1.0;
 }
 
 /// Functor to sort a vector of pair given the pair's second value
