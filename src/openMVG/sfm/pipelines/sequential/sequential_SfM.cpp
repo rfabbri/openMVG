@@ -684,39 +684,45 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
       ob_x[v] = &iterObs_x[v]->second;
       ob_x_ud[v] = cam[v]->get_ud_pixel(ob_x[v]->x);
 
-      OPENMVG_LOG_INFO << "Point in view " << v << " view id " << view[v]->id_view << "\nob_x\n" << ob_x[v]->x << "\nob_x_ud\n" << ob_x_ud[v] << std::endl;
+      //OPENMVG_LOG_INFO << "Point in view " << v << " view id " << view[v]->id_view << "\nob_x\n" << ob_x[v]->x << "\nob_x_ud\n" << ob_x_ud[v] << std::endl;
     }
-    bool include_landmark = true;
-    for (unsigned v0 = 0; v0 + 1 < nviews; ++v0)
-      for (unsigned v1 = v0 + 1; v1 < nviews; ++v1) {
-        const double angle = AngleBetweenRay(
-          pose[v0], cam[v0], pose[v1], cam[v1], ob_x_ud[v0], ob_x_ud[v1]);
-        
-        OPENMVG_LOG_INFO << "pose[v0]landmark.X\n" << (pose[v0])(landmark.X) << std::endl;
-        OPENMVG_LOG_INFO << "pose[v1]landmark.X\n" << (pose[v1])(landmark.X) << std::endl;
-        const Vec2 residual_0 = cam[v0]->residual((pose[v0])(landmark.X), ob_x_ud[v0],true);
-        const Vec2 residual_1 = cam[v1]->residual((pose[v1])(landmark.X), ob_x_ud[v1],true);
+    //bool include_landmark = true;
+    //for (unsigned v0 = 0; v0 + 1 < nviews; ++v0)
+    //  for (unsigned v1 = v0 + 1; v1 < nviews; ++v1) {
+    //    const double angle = AngleBetweenRay(
+    //      pose[v0], cam[v0], pose[v1], cam[v1], ob_x_ud[v0], ob_x_ud[v1]);
+    //    
+    //    //OPENMVG_LOG_INFO << "pose[v0]landmark.X\n" << (pose[v0])(landmark.X) << std::endl;
+    //    //OPENMVG_LOG_INFO << "pose[v1]landmark.X\n" << (pose[v1])(landmark.X) << std::endl;
+    //    const Vec2 residual_0 = cam[v0]->residual((pose[v0])(landmark.X), ob_x_ud[v0],true);
+    //    const Vec2 residual_1 = cam[v1]->residual((pose[v1])(landmark.X), ob_x_ud[v1],true);
 
-        OPENMVG_LOG_INFO << "v0, v1 = " << v0 << ", " << v1 << std::endl;
-        //OPENMVG_LOG_INFO << "residual_0 " << residual_0;
-        //OPENMVG_LOG_INFO << "residual_1 " << residual_1;
-        OPENMVG_LOG_INFO << "residual_0 norm " << residual_0.norm();
-        OPENMVG_LOG_INFO << "residual_1 norm " << residual_1.norm();
-        if (angle <= 2.0) {
-          OPENMVG_LOG_INFO << "FAIL angle test with angle " << angle;
-          include_landmark = false;
-        } else if (!CheiralityTest((*cam[v0])(ob_x_ud[v0]), pose[v0],
-                            (*cam[v1])(ob_x_ud[v1]), pose[v1], landmark.X)) {
-          OPENMVG_LOG_INFO << "FAIL Cheirality test ";
-          include_landmark = false;
-        } else if (residual_0.norm() >= relativePose_info.found_residual_precision ||
-            residual_1.norm() >= relativePose_info.found_residual_precision) {
-            OPENMVG_LOG_INFO << "FAIL residual test: " << residual_0.norm() << " " 
-              << residual_1.norm() << " one of them is greater than " << relativePose_info.found_residual_precision;
-          include_landmark = false;
-        }
-      }
-    if (include_landmark)
+    //    OPENMVG_LOG_INFO << "v0, v1 = " << v0 << ", " << v1 << std::endl;
+    //    //OPENMVG_LOG_INFO << "residual_0 " << residual_0;
+    //    //OPENMVG_LOG_INFO << "residual_1 " << residual_1;
+    //    //OPENMVG_LOG_INFO << "residual_0 norm " << residual_0.norm();
+    //    //OPENMVG_LOG_INFO << "residual_1 norm " << residual_1.norm();
+    //    if (angle <= 2.0) {
+    //      OPENMVG_LOG_INFO << "FAIL angle test with angle " << angle;
+    //      include_landmark = false;
+    //    } else if (!CheiralityTest((*cam[v0])(ob_x_ud[v0]), pose[v0],
+    //                        (*cam[v1])(ob_x_ud[v1]), pose[v1], landmark.X)) {
+    //      OPENMVG_LOG_INFO << "FAIL Cheirality test ";
+    //      include_landmark = false;
+    //    } else if (residual_0.norm() >= relativePose_info.found_residual_precision ||
+    //        residual_1.norm() >= relativePose_info.found_residual_precision) {
+    //        OPENMVG_LOG_INFO << "FAIL residual test: " << residual_0.norm() << " " 
+    //          << residual_1.norm() << " one of them is greater than " << relativePose_info.found_residual_precision;
+    //      include_landmark = false;
+    //    }
+    //  }
+    //if (include_landmark)
+    const Vec2 residual_0 = cam[0]->residual((pose[0])(landmark.X), ob_x_ud[0],true);
+    const Vec2 residual_1 = cam[1]->residual((pose[1])(landmark.X), ob_x_ud[1],true);
+    const Vec2 residual_2 = cam[2]->residual((pose[2])(landmark.X), ob_x_ud[2],true);
+    const double angle0 = AngleBetweenRay(pose[0], cam[0], pose[1], cam[1], ob_x_ud[0], ob_x_ud[1]);
+    const double angle2 = AngleBetweenRay(pose[1], cam[1], pose[2], cam[2], ob_x_ud[1], ob_x_ud[2]);
+    if (angle0 > 2.0 && angle2 > 2.0 && CheiralityTest((*cam[0])(ob_x_ud[0]), pose[0], (*cam[1])(ob_x_ud[1]), pose[1], landmark.X) && CheiralityTest((*cam[1])(ob_x_ud[1]), pose[1], (*cam[2])(ob_x_ud[2]), pose[2], landmark.X) && residual_0.norm() < relativePose_info.found_residual_precision && residual_1.norm() < relativePose_info.found_residual_precision && residual_2.norm() < relativePose_info.found_residual_precision)
       sfm_data_.structure[trackId] = landmarks[trackId];
   }
   std::cout << "residual phase\n";
@@ -776,6 +782,7 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
       "Reconstruction_Report_Trifocal.html"));
     htmlFileStream << html_doc_stream_->getDoc();
   }
+  OPENMVG_LOG_INFO << "empty: " << sfm_data_.structure.empty();
   return !sfm_data_.structure.empty();
 }
 
@@ -1034,6 +1041,7 @@ bool SequentialSfMReconstructionEngine::MakeInitialPair3D(const Pair & current_p
       htmlFileStream << html_doc_stream_->getDoc();
     }
   }
+  OPENMVG_LOG_INFO << "empty: " << sfm_data_.structure.empty();
   return !sfm_data_.structure.empty();
 }
 
@@ -1051,6 +1059,7 @@ double SequentialSfMReconstructionEngine::ComputeResidualsHistogram(Histogram<do
       const Pose3 pose = sfm_data_.GetPoseOrDie(view);
       const auto intrinsic = sfm_data_.GetIntrinsics().find(view->id_intrinsic)->second;
       const Vec2 residual = intrinsic->residual(pose(landmark_entry.second.X), observation.second.x);
+      OPENMVG_LOG_INFO << "residual\n" << residual;
       vec_residuals.emplace_back( std::abs(residual(0)) );
       vec_residuals.emplace_back( std::abs(residual(1)) );
     }
