@@ -19,12 +19,15 @@ namespace openMVG {
   /// Compute a 3D position of a point from several images of it. In particular,
   ///  compute the projective point X in R^4 such that x = PX.
   /// Algorithm is the standard DLT; for derivation see appendix of Keir's thesis.
-  void TriangulateNView
+  bool TriangulateNView
   (
     const Mat3X &x, // x's are landmark bearing vectors in each camera
     const std::vector<Mat34> &Ps, // Ps are projective cameras
     Vec4 *X
   );
+  // Gabriel Andrade commentary of code changing!
+  // Make TriangulateNView being boolean.
+  // Checks if Vec4 is at least Vec4.norm > 0 returns true
 
   // This method uses the algebraic distance approximation.
   // Note that this method works better when the 2D points are normalized

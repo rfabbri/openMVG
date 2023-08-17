@@ -15,7 +15,7 @@
 
 namespace openMVG {
 
-void TriangulateNView
+bool TriangulateNView
 (
   const Mat3X &x,
   const std::vector<Mat34> &poses,
@@ -36,6 +36,7 @@ void TriangulateNView
   Vec X_and_alphas(4 + nviews);
   Nullspace(A, X_and_alphas);
   *X = X_and_alphas.head(4);
+  return (*X).norm() > 0;
 }
 
 bool TriangulateNViewAlgebraic
