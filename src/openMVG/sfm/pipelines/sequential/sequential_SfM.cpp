@@ -604,9 +604,16 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
     // Init views and intrincics
     tiny_scene.views.insert(*sfm_data_.GetViews().find(view[v]->id_view));
     tiny_scene.intrinsics.insert(*iterIntrinsic[v]);
-    tiny_scene.poses[view[v]->id_pose] = Pose3(relativePose_info.relativePoseTrifocal[v].block<3,3>(0,0),relativePose_info.relativePoseTrifocal[v].block<3,1>(0,2));
+    if (v == 0) {
+      tiny_scene.poses[view[v]->id_pose] = Pose3(Mat3::Identity(), Vec3::Zero());
+      Mat34 R0T0 = Mat34::Zero();
+      R0T0.block<3,3>(0,0) = Mat3::Identity();
+      P.push_back(R0T0);
+    } else {
+      tiny_scene.poses[view[v]->id_pose] = Pose3(relativePose_info.relativePoseTrifocal[v].block<3,3>(0,0),relativePose_info.relativePoseTrifocal[v].block<3,1>(0,3));
     // Init projection matrices
-    P.push_back(dynamic_cast<const Pinhole_Intrinsic *>(cam[v])->K()*(relativePose_info.relativePoseTrifocal[v]));
+      P.push_back(dynamic_cast<const Pinhole_Intrinsic *>(cam[v])->K()*(relativePose_info.relativePoseTrifocal[v]));
+    }
   }
 
   // Init structure
@@ -632,6 +639,7 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
       // triangulate 3 views
       Vec4 X;
       TriangulateNView(x, P, &X);
+      //OPENMVG_LOG_INFO << "X = " << X << std::endl;
       landmarks[track_iterator.first].X = X.hnormalized();
     }
     Save(tiny_scene, stlplus::create_filespec(sOut_directory_, "initialTriplet.ply"), ESfM_Data(ALL));
@@ -658,9 +666,10 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
   } // !badj
   // Save computed data
   Pose3 pose[nviews];
+  
   for (unsigned v = 0; v < nviews; ++v)  {
     sfm_data_.poses[view[v]->id_pose] = tiny_scene.poses[view[v]->id_pose];
-    pose[v] = sfm_data_.poses[view[v]->id_pose];
+    pose[v] = tiny_scene.poses[view[v]->id_pose];
     map_ACThreshold_.insert({t[v], relativePose_info.found_residual_precision});
     set_remaining_view_id_.erase(view[v]->id_view);
   }
@@ -669,6 +678,7 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
   // TODO: this is currently too strict,
   // every 2-view must pass
   std::cout << "before saving\n";
+  OPENMVG_LOG_INFO << "rotations and translations\n" << "pose0 rotation\n" << pose[0].rotation() << "\npose0 translation\n" << pose[0].translation() << "\npose1 rotation\n" << pose[1].rotation() << "\npose1 translation\n" << pose[1].translation() << "\npose2 rotation\n" << pose[2].rotation() << "\npose2 translation\n" << pose[2].translation();
   for (const auto & landmark_entry : tiny_scene.GetLandmarks()) {
     const IndexT trackId = landmark_entry.first;
     const Landmark &landmark = landmark_entry.second;
@@ -686,7 +696,7 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
 
       //OPENMVG_LOG_INFO << "Point in view " << v << " view id " << view[v]->id_view << "\nob_x\n" << ob_x[v]->x << "\nob_x_ud\n" << ob_x_ud[v] << std::endl;
     }
-    //bool include_landmark = true;
+    bool include_landmark = true;
     //for (unsigned v0 = 0; v0 + 1 < nviews; ++v0)
     //  for (unsigned v1 = v0 + 1; v1 < nviews; ++v1) {
     //    const double angle = AngleBetweenRay(
@@ -716,13 +726,27 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
     //      include_landmark = false;
     //    }
     //  }
-    //if (include_landmark)
     const Vec2 residual_0 = cam[0]->residual((pose[0])(landmark.X), ob_x_ud[0],true);
     const Vec2 residual_1 = cam[1]->residual((pose[1])(landmark.X), ob_x_ud[1],true);
     const Vec2 residual_2 = cam[2]->residual((pose[2])(landmark.X), ob_x_ud[2],true);
     const double angle0 = AngleBetweenRay(pose[0], cam[0], pose[1], cam[1], ob_x_ud[0], ob_x_ud[1]);
     const double angle2 = AngleBetweenRay(pose[1], cam[1], pose[2], cam[2], ob_x_ud[1], ob_x_ud[2]);
-    if (angle0 > 2.0 && angle2 > 2.0 && CheiralityTest((*cam[0])(ob_x_ud[0]), pose[0], (*cam[1])(ob_x_ud[1]), pose[1], landmark.X) && CheiralityTest((*cam[1])(ob_x_ud[1]), pose[1], (*cam[2])(ob_x_ud[2]), pose[2], landmark.X) && residual_0.norm() < relativePose_info.found_residual_precision && residual_1.norm() < relativePose_info.found_residual_precision && residual_2.norm() < relativePose_info.found_residual_precision)
+    OPENMVG_LOG_INFO << "(angle0, angle2, residual_0, residual_1, residual_2) = " << angle0 << ", " << angle2 << ", " << residual_0.norm() << ", " << residual_1.norm() << ", " << residual_2.norm() << std::endl; 
+    if (angle0 <= 2.0 || angle2 <= 2.0) {
+      OPENMVG_LOG_INFO << "FAIL angle test with angle0 and angle2 " << angle0 << ", " << angle2 << std::endl;
+      include_landmark = false;
+    } else if (!CheiralityTest((*cam[0])(ob_x_ud[0]), pose[0], (*cam[1])(ob_x_ud[1]), pose[1], landmark.X) || !CheiralityTest((*cam[1])(ob_x_ud[1]), pose[1], (*cam[2])(ob_x_ud[2]), pose[2], landmark.X)) {
+      OPENMVG_LOG_INFO << "FAIL Cheirality test ";
+      include_landmark = false;
+    } else if (residual_0.norm() >= relativePose_info.found_residual_precision ||
+        residual_1.norm() >= relativePose_info.found_residual_precision ||
+        residual_2.norm() >= relativePose_info.found_residual_precision) {
+        OPENMVG_LOG_INFO << "FAIL residual norm test: (residual_0, residual_1, residual_2) = " << residual_0.norm() << ", " 
+          << residual_1.norm() << ", " << residual_2.norm() << " one of them is greater than " << relativePose_info.found_residual_precision;
+      include_landmark = false;
+    }
+    if (include_landmark)
+    //if (angle0 > 2.0 && angle2 > 2.0 && CheiralityTest((*cam[0])(ob_x_ud[0]), pose[0], (*cam[1])(ob_x_ud[1]), pose[1], landmark.X) && CheiralityTest((*cam[1])(ob_x_ud[1]), pose[1], (*cam[2])(ob_x_ud[2]), pose[2], landmark.X) && residual_0.norm() < relativePose_info.found_residual_precision && residual_1.norm() < relativePose_info.found_residual_precision && residual_2.norm() < relativePose_info.found_residual_precision)
       sfm_data_.structure[trackId] = landmarks[trackId];
   }
   std::cout << "residual phase\n";
