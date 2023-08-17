@@ -297,7 +297,7 @@ inline bool CheiralityTest
   const Vec3 & X
 )
 {
-  return bearing.dot(pose(X)) > 0.0;
+  return pose(X)(2) > 0.0;
 }
 
 /**
