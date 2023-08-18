@@ -626,21 +626,24 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
       // Get corresponding points
       auto iter = track_iterator.second.cbegin();
       uint32_t ifeat = iter->second;
-      Observations obs;
       for (unsigned v = 0; v < nviews; ++v) {
         x.col(v) = 
-          features_provider_->sio_feats_per_view[t[v]][ifeat].coords().homogeneous().cast<double>();
+          (*cam[v])(cam[v]->get_ud_pixel(features_provider_->sio_feats_per_view[t[v]][ifeat].coords().cast<double>()));
         // TODO(trifocal future) get_ud_pixel
         ifeat=(++iter)->second;
-        obs[view[v]->id_view] = Observation(x.col(v).hnormalized(), t[v]);
       }
-      landmarks[track_iterator.first].obs = std::move(obs);
       
       // triangulate 3 views
       Vec4 X;
-      TriangulateNView(x, P, &X);
+      if (TriangulateNView(x, P, &X)) {
+        Observations obs;
+        obs[view[0]->id_view] = Observation(x.col(0).hnormalized(), t[0]);
+        obs[view[1]->id_view] = Observation(x.col(1).hnormalized(), t[1]);
+        obs[view[2]->id_view] = Observation(x.col(2).hnormalized(), t[2]);
+        landmarks[track_iterator.first].obs = std::move(obs);
+        landmarks[track_iterator.first].X = X.hnormalized();
+      }
       //OPENMVG_LOG_INFO << "X = " << X << std::endl;
-      landmarks[track_iterator.first].X = X.hnormalized();
     }
     Save(tiny_scene, stlplus::create_filespec(sOut_directory_, "initialTriplet.ply"), ESfM_Data(ALL));
   } // !initial structure
@@ -731,7 +734,7 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
     const Vec2 residual_2 = cam[2]->residual((pose[2])(landmark.X), ob_x_ud[2],true);
     const double angle0 = AngleBetweenRay(pose[0], cam[0], pose[1], cam[1], ob_x_ud[0], ob_x_ud[1]);
     const double angle2 = AngleBetweenRay(pose[1], cam[1], pose[2], cam[2], ob_x_ud[1], ob_x_ud[2]);
-    OPENMVG_LOG_INFO << "(angle0, angle2, residual_0, residual_1, residual_2) = " << angle0 << ", " << angle2 << ", " << residual_0.norm() << ", " << residual_1.norm() << ", " << residual_2.norm() << std::endl; 
+    OPENMVG_LOG_INFO << "(angle0, angle2, residual_0, residual_1, residual_2, cam0obx0) = " << angle0 << ", " << angle2 << ", " << residual_0.norm() << ", " << residual_1.norm() << ", " << residual_2.norm() << "\n" << (*cam[0])(ob_x_ud[0]) << std::endl; 
     if (angle0 <= 2.0 || angle2 <= 2.0) {
       OPENMVG_LOG_INFO << "FAIL angle test with angle0 and angle2 " << angle0 << ", " << angle2 << std::endl;
       include_landmark = false;
