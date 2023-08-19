@@ -606,14 +606,12 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
     tiny_scene.intrinsics.insert(*iterIntrinsic[v]);
     if (v == 0) {
       tiny_scene.poses[view[v]->id_pose] = Pose3(Mat3::Identity(), Vec3::Zero());
-      Mat34 R0T0 = Mat34::Zero();
-      R0T0.block<3,3>(0,0) = Mat3::Identity();
-      P.push_back(R0T0);
+      P.push_back(Mat34::Identity());
     } else {
       tiny_scene.poses[view[v]->id_pose] = Pose3(relativePose_info.relativePoseTrifocal[v].block<3,3>(0,0),relativePose_info.relativePoseTrifocal[v].block<3,1>(0,3));
     // Init projection matrices
       P.push_back(dynamic_cast<const Pinhole_Intrinsic *>(cam[v])->K()*(relativePose_info.relativePoseTrifocal[v]));
-    }
+   }
   }
 
   // Init structure
@@ -632,7 +630,6 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
         // TODO(trifocal future) get_ud_pixel
         ifeat=(++iter)->second;
       }
-      
       // triangulate 3 views
       Vec4 X;
       if (TriangulateNView(x, P, &X)) {
@@ -671,8 +668,12 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
   Pose3 pose[nviews];
   
   for (unsigned v = 0; v < nviews; ++v)  {
+    if (v == 0)
+      pose[v] = Pose3(Mat3::Identity(), Vec3::Zero());
+    else
+      pose[v] = tiny_scene.poses[view[v]->id_pose];
     sfm_data_.poses[view[v]->id_pose] = tiny_scene.poses[view[v]->id_pose];
-    pose[v] = tiny_scene.poses[view[v]->id_pose];
+    OPENMVG_LOG_INFO << "rotations and translations\n" << pose[v].rotation() << "\npose0 translation\n" << pose[v].translation();
     map_ACThreshold_.insert({t[v], relativePose_info.found_residual_precision});
     set_remaining_view_id_.erase(view[v]->id_view);
   }
@@ -681,7 +682,6 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
   // TODO: this is currently too strict,
   // every 2-view must pass
   std::cout << "before saving\n";
-  OPENMVG_LOG_INFO << "rotations and translations\n" << "pose0 rotation\n" << pose[0].rotation() << "\npose0 translation\n" << pose[0].translation() << "\npose1 rotation\n" << pose[1].rotation() << "\npose1 translation\n" << pose[1].translation() << "\npose2 rotation\n" << pose[2].rotation() << "\npose2 translation\n" << pose[2].translation();
   for (const auto & landmark_entry : tiny_scene.GetLandmarks()) {
     const IndexT trackId = landmark_entry.first;
     const Landmark &landmark = landmark_entry.second;
@@ -734,14 +734,16 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
     const Vec2 residual_2 = cam[2]->residual((pose[2])(landmark.X), ob_x_ud[2],true);
     const double angle0 = AngleBetweenRay(pose[0], cam[0], pose[1], cam[1], ob_x_ud[0], ob_x_ud[1]);
     const double angle2 = AngleBetweenRay(pose[1], cam[1], pose[2], cam[2], ob_x_ud[1], ob_x_ud[2]);
-    OPENMVG_LOG_INFO << "(angle0, angle2, residual_0, residual_1, residual_2, cam0obx0) = " << angle0 << ", " << angle2 << ", " << residual_0.norm() << ", " << residual_1.norm() << ", " << residual_2.norm() << "\n" << (*cam[0])(ob_x_ud[0]) << std::endl; 
+    //OPENMVG_LOG_INFO << "(angle0, angle2, residual_0, residual_1, residual_2, cam0obx0) = " << angle0 << ", " << angle2 << ", " << residual_0.norm() << ", " << residual_1.norm() << ", " << residual_2.norm() << "\n" << (*cam[0])(ob_x_ud[0]) << std::endl; 
     if (angle0 <= 2.0 || angle2 <= 2.0) {
       OPENMVG_LOG_INFO << "FAIL angle test with angle0 and angle2 " << angle0 << ", " << angle2 << std::endl;
       include_landmark = false;
-    } else if (!CheiralityTest((*cam[0])(ob_x_ud[0]), pose[0], (*cam[1])(ob_x_ud[1]), pose[1], landmark.X) || !CheiralityTest((*cam[1])(ob_x_ud[1]), pose[1], (*cam[2])(ob_x_ud[2]), pose[2], landmark.X)) {
+    }
+    if (!CheiralityTest((*cam[0])(ob_x_ud[0]), pose[0], (*cam[1])(ob_x_ud[1]), pose[1], landmark.X) || !CheiralityTest((*cam[1])(ob_x_ud[1]), pose[1], (*cam[2])(ob_x_ud[2]), pose[2], landmark.X)) {
       OPENMVG_LOG_INFO << "FAIL Cheirality test ";
       include_landmark = false;
-    } else if (residual_0.norm() >= relativePose_info.found_residual_precision ||
+    }
+    if (residual_0.norm() >= relativePose_info.found_residual_precision ||
         residual_1.norm() >= relativePose_info.found_residual_precision ||
         residual_2.norm() >= relativePose_info.found_residual_precision) {
         OPENMVG_LOG_INFO << "FAIL residual norm test: (residual_0, residual_1, residual_2) = " << residual_0.norm() << ", " 
