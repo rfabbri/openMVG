@@ -31,7 +31,17 @@ using namespace openMVG::geometry;
 namespace openMVG {
 namespace sfm {
 
+static void invert_intrinsics(
+    const Mat3 &K,
+    const double px_coords[2],
+    double normalized_coords[2]) 
+{
 
+  const double *px = px_coords;
+  double *nrm = normalized_coords;
+  nrm[1] = (px[1] - K(1,2)) / K(1,1);
+  nrm[0] = (px[0] - K(0,1)*nrm[1] - K(0,2)) / K(0,0);
+}
 static void
 invert_intrinsics_tgt(
     const Mat3 &K,
@@ -67,14 +77,15 @@ bool robustRelativePoseTrifocal
                                            // Get 3D cam coords from pxdatum ->
                                            // get eigen matrix 3x1
                                            // then convert into eigen vector and normalize it
-      OPENMVG_LOG_INFO << "datum point in pixels:" << pxdatum[v].col(ip).head(2);
-      OPENMVG_LOG_INFO << "datum tangent in pixels:" << pxdatum[v].col(ip).tail(2);
+      //OPENMVG_LOG_INFO << "datum point in pixels:" << pxdatum[v].col(ip).head(2);
+      //OPENMVG_LOG_INFO << "datum tangent in pixels:" << pxdatum[v].col(ip).tail(2);
       datum[v].col(ip).head(2) = (*intrinsics[v])(pxdatum[v].col(ip).head<2>()).colwise().hnormalized();
       const cameras::Pinhole_Intrinsic *Kin = dynamic_cast<const cameras::Pinhole_Intrinsic *>(intrinsics[v]);
       assert(Kin);
+      //invert_intrinsics(Kin->K(), pxdatum[v].col(ip).data(), datum[v].col(ip).data());
       invert_intrinsics_tgt(Kin->K(), pxdatum[v].col(ip).data()+2, datum[v].col(ip).data()+2);
-      OPENMVG_LOG_INFO << "datum point in world units:" << datum[v].col(ip).head(2);
-      OPENMVG_LOG_INFO << "datum tangent in world units:" << datum[v].col(ip).tail(2);
+      //OPENMVG_LOG_INFO << "datum point in world units:" << datum[v].col(ip).head(2);
+      //OPENMVG_LOG_INFO << "datum tangent in world units:" << datum[v].col(ip).tail(2);
     }
   }
   using TrifocalKernel = trifocal::ThreeViewKernel<trifocal::Trifocal3PointPositionTangentialSolver, 
@@ -88,7 +99,7 @@ bool robustRelativePoseTrifocal
     = trifocal::NormalizedSquaredPointReprojectionOntoOneViewError::
     threshold_pixel_to_normalized(threshold_px, (double (*)[3])(double *)((dynamic_cast<const cameras::Pinhole_Intrinsic *> (intrinsics[0]))->K().data()));
   threshold_normalized_squared *= threshold_normalized_squared;
-  OPENMVG_LOG_INFO << "RANSAC threshold is " << threshold_normalized_squared;
+  //OPENMVG_LOG_INFO << "RANSAC threshold is " << threshold_normalized_squared;
   relativePoseTrifocal_info.found_residual_precision = threshold_px; // XXX TODO: // improve
 
   relativePoseTrifocal_info.relativePoseTrifocal 
