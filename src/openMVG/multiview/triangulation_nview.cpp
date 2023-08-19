@@ -32,6 +32,7 @@ bool TriangulateNView
   {
     A.block<3, 4>(3 * i, 0)     = -poses[i];
     A.block<3,1> (3 * i, 4 + i) = x.col(i);
+    //std::cout << "A mtx\n" << A << std::endl;
   }
   Vec X_and_alphas(4 + nviews);
   Nullspace(A, X_and_alphas);
