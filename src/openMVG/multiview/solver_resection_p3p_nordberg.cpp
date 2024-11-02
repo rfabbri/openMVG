@@ -93,24 +93,6 @@ static void gauss_newton_refineL(Vec3 &L,
   }
 };
 
-static inline bool root2real(const double b, const double c, double & r1, double & r2)
-{
-  const double v = b * b -4.0 * c;
-  if (v <= 0.0) {
-      r1 = r2 = -0.5 * b;
-      return v >= 0.0;
-  }
-  const double y = std::sqrt(v);
-  if (b < 0.0) {
-      r1 = 0.5 * (-b + y);
-      r2 = 0.5 * (-b - y);
-  } else {
-      r1 = 2.0 * c / (-b + y);
-      r2 = 2.0 * c / (-b - y);
-  }
-  return true;
-};
-
 /**
  * @brief This function finds a single root of the cubic polynomial equation
  * @param b Coefficient of quadratic parameter
@@ -122,10 +104,10 @@ static inline bool root2real(const double b, const double c, double & r1, double
  *
  * The return root is as stable as possible in the sense that it has as high
  * derivative as possible.  The solution is found by simple Newton-Raphson
- * iterations, and the trick is to choose the intial solution r0 in a clever
+ * iterations, and the trick is to choose the initial solution r0 in a clever
  * way.
  *
- * The intial solution is found by considering 5 cases:
+ * The initial solution is found by considering 5 cases:
  *
  * Cases I and II: h has no stationary points. In this case its derivative
  * is positive.  The inital solution to the NR-iteration is r0 here h has
@@ -182,7 +164,7 @@ static double cubick(const double &b, const double &c, const double &d)
   // Do ITER Newton-Raphson iterations
   // Break if position of root changes less than 1e-13
   // double starterr=std::abs(r0*(r0*(r0 + b) + c) + d);
-  
+
   // TODO(RJ:) I have hardcoded the number of iteration here, it's hardcoded in a macro definition in the orginal implementation
   // according to the author, increasing it could lead to a better solution (more robust)
   for (unsigned int cnt = 0; cnt < 50; ++cnt)
@@ -225,7 +207,7 @@ static void eigwithknown0(const Mat3 &x, Mat3 &E, Vec3 &L)
              x(0, 0) * (x(1, 1) + x(2, 2)) + x(1, 1) * x(2, 2);
   double e1, e2;
   // roots(poly(x))
-  root2real(b, c, e1, e2);
+  P3PSolver_Nordberg::root2real(b, c, e1, e2);
 
   if (std::abs(e1) < std::abs(e2))
     std::swap(e1, e2);
@@ -368,68 +350,68 @@ bool computePosesNordberg(
   std::array<Vec3, 4> Ls;
 
   // use the t=Vl with t2,st2,t3 and solve for t3 in t2
-  std::array<double, 2> ss = {v,-v};
-  for(const double s : ss)
-  {
-      // u = V(:, 1) - sV(:,2)
-      const Vec3 U = V.col(0) - s * V.col(1);
-      const double u1 = U(0);
-      const double u2 = U(1);
-      const double u3 = U(2);
+    std::array<double, 2> ss = {v,-v};
+    for(const double s : ss)
+    {
+        // u = V(:, 1) - sV(:,2)
+        const Vec3 U = V.col(0) - s * V.col(1);
+        const double u1 = U(0);
+        const double u2 = U(1);
+        const double u3 = U(2);
 
-      // we are computing lambda using a linear relation
-      // u1*l1 + u2*l2 + u3*l3=0
-      // li>0, implies all three ui=0 is degenerate...
-      // if two are zero the third must be
-      // hence at most one can be zero.
-      // divide by the largest for best numerics,
-      // simple version, use the bigger of u1, u2, one will always be non-zero
-      if(std::abs(u1)<std::abs(u2))
-      {// solve for l2
-        const double a = (a23 - a12) * u3*u3 - a12 * u2*u2 + a12 * b23 *u2 * u3;
-        const double b = (2.* a23 * u1 * u3 - 2. * a12 * u1*u3 + a12 * b23 * u1 * u2 - a23 * b12 * u2 *u3)/a;
-        const double c = (a23 * u1*u1 - a12 * u1*u1 + a23 * u2*u2 - a23 * b12 *u1 *u2)/a;
+        // we are computing lambda using a linear relation
+        // u1*l1 + u2*l2 + u3*l3=0
+        // li>0, implies all three ui=0 is degenerate...
+        // if two are zero the third must be
+        // hence at most one can be zero.
+        // divide by the largest for best numerics,
+        // simple version, use the bigger of u1, u2, one will always be non-zero
+        if(std::abs(u1)<std::abs(u2))
+        {// solve for l2
+          const double a = (a23 - a12) * u3*u3 - a12 * u2*u2 + a12 * b23 *u2 * u3;
+          const double b = (2.* a23 * u1 * u3 - 2. * a12 * u1*u3 + a12 * b23 * u1 * u2 - a23 * b12 * u2 *u3)/a;
+          const double c = (a23 * u1*u1 - a12 * u1*u1 + a23 * u2*u2 - a23 * b12 *u1 *u2)/a;
 
-        std::array<double, 2> taus;
-        if (!root2real(b, c, taus[0], taus[1])) continue;
-        for (const double tau : taus)
-        {
-          if (tau<=0) continue;
-          //(tau^2 + b13*tau + 1)*l1^2 = a13
-          //positive only
-          const double l1 = std::sqrt(a13 / (tau *(tau + b13) + 1.));
-          const double l3 = tau * l1;
-          const double l2 = -(u1 * l1 + u3 * l3)/u2;
-          if (l2 <= 0.) continue;
-          Ls[valid] = {l1,l2,l3}; // Vec3 list init
-          ++valid;
-        }
-      }
-      else
-      { // solve for l1
-        const double w2 = 1./( -u1);
-        const double w0 = u2*w2;
-        const double w1 = u3*w2;
-
-        const double a = 1.0 / ( (a13 - a12) *w1*w1 - a12 * b13 *w1 - a12);
-        const double b = (a13 * b12 * w1 - a12 * b13 * w0 - 2. * w0 * w1 * (a12 - a13)) * a;
-        const double c = ((a13 - a12) * w0 * w0 + a13 * b12 * w0 + a13) * a;
-
-        std::array<double, 2> taus;
-        if (!root2real(b, c, taus[0], taus[1])) continue;
-        for (const double tau : taus)
-        {
-            if(tau<=0.) continue;
-            const double d = a23 / (tau * (b23 + tau) + 1.0);
-            const double l2 = std::sqrt(d);
-            const double l3 = tau * l2;
-            const double l1 = w0 * l2 + w1 * l3;
-            if (l1 <= 0.) continue;
+          std::array<double, 2> taus;
+          if (!P3PSolver_Nordberg::root2real(b, c, taus[0], taus[1])) continue;
+          for (const double tau : taus)
+          {
+            if (tau<=0) continue;
+            //(tau^2 + b13*tau + 1)*l1^2 = a13
+            //positive only
+            const double l1 = std::sqrt(a13 / (tau *(tau + b13) + 1.));
+            const double l3 = tau * l1;
+            const double l2 = -(u1 * l1 + u3 * l3)/u2;
+            if (l2 <= 0.) continue;
             Ls[valid] = {l1,l2,l3}; // Vec3 list init
             ++valid;
+          }
         }
-      }
-  }
+        else
+        { // solve for l1
+          const double w2 = 1./( -u1);
+          const double w0 = u2*w2;
+          const double w1 = u3*w2;
+
+          const double a = 1.0 / ( (a13 - a12) *w1*w1 - a12 * b13 *w1 - a12);
+          const double b = (a13 * b12 * w1 - a12 * b13 * w0 - 2. * w0 * w1 * (a12 - a13)) * a;
+          const double c = ((a13 - a12) * w0 * w0 + a13 * b12 * w0 + a13) * a;
+
+          std::array<double, 2> taus;
+          if (!P3PSolver_Nordberg::root2real(b, c, taus[0], taus[1])) continue;
+          for (const double tau : taus)
+          {
+              if(tau<=0.) continue;
+              const double d = a23 / (tau * (b23 + tau) + 1.0);
+              const double l2 = std::sqrt(d);
+              const double l3 = tau * l2;
+              const double l1 = w0 * l2 + w1 * l3;
+              if (l1 <= 0.) continue;
+              Ls[valid] = {l1,l2,l3}; // Vec3 list init
+              ++valid;
+          }
+        }
+    }
 
   // if constexpr (refinement_iterations>0)
   for (int i = 0; i < valid; ++i)
