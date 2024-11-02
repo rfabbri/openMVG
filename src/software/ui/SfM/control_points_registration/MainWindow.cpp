@@ -27,11 +27,11 @@
 
 #include "openMVG/cameras/Camera_Intrinsics.hpp"
 #include "openMVG/multiview/triangulation_nview.hpp"
-#include "openMVG/sfm/sfm_data_triangulation.hpp"
+#include "openMVG/sfm/base/sfm_data_triangulation.hpp"
 #include "openMVG/geometry/rigid_transformation3D_srt.hpp"
 #include "openMVG/geometry/Similarity3.hpp"
-#include "openMVG/sfm/sfm_data_BA_ceres.hpp"
-#include "openMVG/sfm/sfm_data_transform.hpp"
+#include "openMVG/sfm/base/sfm_data_BA_ceres.hpp"
+#include "openMVG/sfm/base/sfm_data_transform.hpp"
 
 #include "openMVG/stl/stl.hpp"
 

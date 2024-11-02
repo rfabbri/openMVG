@@ -11,8 +11,8 @@
 
 #pragma once
 
-#include "openMVG/sfm/sfm_data.hpp"
-#include "openMVG/sfm/sfm_data_io.hpp"
+#include "openMVG/sfm/base/sfm_data.hpp"
+#include "openMVG/sfm/base/sfm_data_io.hpp"
 
 #include <fstream>
 #include <cereal/archives/json.hpp>

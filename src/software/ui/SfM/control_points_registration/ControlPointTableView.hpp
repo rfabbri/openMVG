@@ -11,7 +11,7 @@
 
 #include <QDialog>
 #include <QTableWidget>
-#include "openMVG/sfm/sfm_data.hpp"
+#include "openMVG/sfm/base/sfm_data.hpp"
 
 namespace control_point_GUI {
 
