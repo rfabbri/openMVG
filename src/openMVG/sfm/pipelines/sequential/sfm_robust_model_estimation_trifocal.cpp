@@ -75,7 +75,7 @@ bool robustRelativePoseTrifocal
     = trifocal::NormalizedSquaredPointReprojectionOntoOneViewError::
     threshold_pixel_to_normalized(threshold_px, (double (*)[3])(double *)((dynamic_cast<const cameras::Pinhole_Intrinsic *> (intrinsics[0]))->K().data()));
   threshold_normalized_squared *= threshold_normalized_squared;
-  OPENMVG_LOG_INFO << "RANSAC threshold is " << threshold_normalized_squared;
+  OPENMVG_LOG_INFO << "RANSAC threshold is " << threshold_normalized_squared << " squared normalized px or " << threshold_px << " px";
   relativePoseTrifocal_info.found_residual_precision = threshold_px; // XXX TODO: // improve
 
   // TODO: use orientation for inlier determination
@@ -89,7 +89,7 @@ bool robustRelativePoseTrifocal
   OPENMVG_LOG_INFO << "Number of inliers " << relativePoseTrifocal_info.vec_inliers.size();
 
   // for Debug
-  OPENMVG_LOG_INFO << "Best inlier residual: ";
+  OPENMVG_LOG_INFO << "Best inlier normalized residual squared: ";
   for (unsigned i=0; i < relativePoseTrifocal_info.vec_inliers.size(); ++i) {
     OPENMVG_LOG_INFO << "\tInlier " << i <<  " " <<
       trifocal::NormalizedSquaredPointReprojectionOntoOneViewError::Error(

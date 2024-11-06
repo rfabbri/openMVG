@@ -406,30 +406,33 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
   shared_track_visibility_helper_->GetTracksInImages({t[0], t[1], t[2]}, map_tracksCommon);
   const size_t n = map_tracksCommon.size(); OPENMVG_LOG_INFO << "number of tracks showing up in the three views = " << n ;
   std::array<Mat, nviews> pxdatum; // x,y,orientation across 3 views datum[view](coord,point)
-  Mat scdatum;
+  Mat scdatum; // feature scale
   scdatum.resize(3,n);
-  for (unsigned v = 0; v < nviews; ++v)
-    pxdatum[v].resize(4,n);
 
-  uint32_t cptIndex = 0;
-  for (const auto &track_iter : map_tracksCommon) {
-    auto iter = track_iter.second.cbegin();
-    uint32_t i = iter->second;
-    for (unsigned v = 0; v < nviews; ++v) {
-      assert(features_provider_->sio_feats_per_view[t[v]].size());
-      const features::SIOPointFeature *feature = &(features_provider_->sio_feats_per_view[t[v]][i]);
-      pxdatum[v].col(cptIndex) << feature->x(), feature->y(),
-                                 cos(feature->orientation()), sin(feature->orientation());
-      scdatum(v,cptIndex) = double(feature->scale());
+  {
+    for (unsigned v = 0; v < nviews; ++v)
+      pxdatum[v].resize(4,n);
 
-      if (!isDistortionZero(cam[v])) {
-        OPENMVG_LOG_ERROR << "Work in progress; trifocal initialization currently works for non-zero distortion";
-        exit(1);
+    uint32_t cptIndex = 0;
+    for (const auto &track_iter : map_tracksCommon) {
+      auto iter = track_iter.second.cbegin();
+      uint32_t i = iter->second;
+      for (unsigned v = 0; v < nviews; ++v) {
+        assert(features_provider_->sio_feats_per_view[t[v]].size());
+        const features::SIOPointFeature *feature = &(features_provider_->sio_feats_per_view[t[v]][i]);
+        pxdatum[v].col(cptIndex) << feature->x(), feature->y(),
+                                   cos(feature->orientation()), sin(feature->orientation());
+        scdatum(v,cptIndex) = double(feature->scale());
+
+        if (!isDistortionZero(cam[v])) {
+          OPENMVG_LOG_ERROR << "Work in progress; trifocal initialization currently works for non-zero distortion";
+          exit(1);
+        }
+        // TODO(trifocal future): provide undistortion for tangents for models that need it (get_ud_pixel)
+        i=(++iter)->second;
       }
-      // TODO(trifocal future): provide undistortion for tangents for models that need it (get_ud_pixel)
-      i=(++iter)->second;
+      ++cptIndex;
     }
-    ++cptIndex;
   }
   // ---------------------------------------------------------------------------
   OPENMVG_LOG_INFO << "---------------------------------------------------------";
@@ -503,7 +506,7 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
 
       Vec2 residual = cam[0]->residual( tiny_scene.poses[view[0]->id_pose](landmarks[track_iterator.first].X),
           landmarks[track_iterator.first].obs[view[0]->id_view].x );
-      OPENMVG_LOG_INFO << "Residual from reconstructed point after robust-estimation " << residual.transpose();
+      OPENMVG_LOG_INFO << "Residual from reconstructed point after robust-estimation, in 1st cam (px) " << residual.transpose();
 #if 0
       OPENMVG_LOG_INFO << "Residual from error()";
       { // For debug
@@ -603,7 +606,7 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
     if (best_angle <= 2.0) // TODO: experiment to show that trifocal can accept
       continue;            // this angle as smaller than 2-view and get equal precision
 
-     // reconstruct tangent from the best views and reproject into the 3rd.
+    // reconstruct tangent from the best views and reproject into the 3rd.
     if (UseOrientedConstraint()) {
       unsigned third_v = 0*(best_v0 !=0 && best_v1 != 0) +
                          1*(best_v0 !=1 && best_v1 != 1) + 2*(best_v0 !=2 && best_v1 != 2);

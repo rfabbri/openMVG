@@ -44,11 +44,11 @@ struct NormalizedSquaredPointReprojectionOntoOneViewError {
   // 
   // todo(better guess is possible or use angular error)
   inline static double threshold_pixel_to_normalized(double threshold, const double k[2][3]) {
-    return threshold/k[0][0];
+    return std::max(threshold/k[0][0],threshold/k[1][1]);
   }
 
   inline static double threshold_normalized_to_pixel(double threshold, const double k[2][3]) {
-    return threshold*k[0][0];
+    return std::max(threshold*k[0][0],threshold*k[1][1]);
   }
 };
 
