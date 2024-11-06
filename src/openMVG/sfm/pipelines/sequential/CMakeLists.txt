@@ -38,6 +38,12 @@ target_link_libraries(openMVG_sfm_sequential
     ${STLPLUS_LIBRARY}
 )
 
+target_link_libraries(openMVG_sfm_sequential
+  LINK_PRIVATE
+  openMVG_ceres
+ ${CERES_LIBRARIES}
+)
+
 target_include_directories(openMVG_sfm_sequential
   PRIVATE
     ${CERES_INCLUDE_DIRS}
