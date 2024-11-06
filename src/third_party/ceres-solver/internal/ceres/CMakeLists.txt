@@ -196,7 +196,11 @@ if (MINIGLOG)
   list(APPEND CERES_LIBRARY_SOURCE miniglog/glog/logging.cc)
 endif (MINIGLOG)
 
-add_library(openMVG_ceres STATIC ${CERES_LIBRARY_SOURCE})
+if (BUILD_SHARED_LIBS)
+  add_library(openMVG_ceres SHARED ${CERES_LIBRARY_SOURCE})
+else (BUILD_SHARED_LIBS)
+  add_library(openMVG_ceres STATIC ${CERES_LIBRARY_SOURCE})
+endif (BUILD_SHARED_LIBS)
 set_target_properties(openMVG_ceres PROPERTIES
   VERSION ${CERES_VERSION}
   SOVERSION ${CERES_VERSION_MAJOR})
@@ -222,6 +226,7 @@ if (CXX11)
   include(AddCeresCXX11RequirementsToTarget)
   add_ceres_cxx11_requirements_to_target(openMVG_ceres)
 endif()
+
 
 if (BUILD_SHARED_LIBS)
   # When building a shared library, mark all external libraries as
