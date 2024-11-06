@@ -52,7 +52,7 @@ class Pinhole_Intrinsic : public IntrinsicBase
     * @param ppy Principal point on y-axis
     */
     Pinhole_Intrinsic(
-      unsigned int w = 0, unsigned int h = 0,
+      double w = 0, double h = 0,
       double focal_length_pix = 0.0,
       double ppx = 0.0, double ppy = 0.0 )
       : IntrinsicBase( w, h )
@@ -68,8 +68,8 @@ class Pinhole_Intrinsic : public IntrinsicBase
     * @param K Intrinsic Matrix (3x3) {f,0,ppx; 0,f,ppy; 0,0,1}
     */
     Pinhole_Intrinsic(
-      unsigned int w,
-      unsigned int h,
+      double w,
+      double h,
       const Mat3& K)
       : IntrinsicBase( w, h ), K_(K)
     {

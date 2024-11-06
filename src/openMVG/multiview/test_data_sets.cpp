@@ -36,8 +36,8 @@
 namespace openMVG {
 
 
-nViewDatasetConfigurator::nViewDatasetConfigurator(int fx, int fy,
-  int cx, int cy, double distance, double jitter_amount):
+nViewDatasetConfigurator::nViewDatasetConfigurator(double fx, double fy,
+  double cx, double cy, double distance, double jitter_amount):
   _fx(fx), _fy(fy), _cx(cx), _cy(cy), _dist(distance),
   _jitter_amount(jitter_amount)
 {}
@@ -263,7 +263,7 @@ cameras_gt_[synth_nviews_][4][3] = {
 // 0-based ids. +1 to get file line
 // 
 // Extracting this data from those files: use scripts/getlines from minus
-// or just by hand
+// or just by hand. Actually just run minus/scripts/synthdata/getlines-openmvg
 //
 // This is in pixel image coordinates
 

@@ -68,14 +68,14 @@ struct NViewDataSet {
 struct nViewDatasetConfigurator
 {
   /// Internal camera parameters (focal, principal point)
-  int _fx, _fy, _cx, _cy;
+  double _fx, _fy, _cx, _cy;
 
   /// Camera random position parameters
   double _dist;
   double _jitter_amount;
 
-  nViewDatasetConfigurator(int fx = 1000,  int fy = 1000,
-                           int cx = 500,   int cy  = 500,
+  nViewDatasetConfigurator(double fx = 1000,  double fy = 1000,
+                           double cx = 500,   double cy  = 500,
                            double distance = 1.5,
                            double jitter_amount = 0.01 );
 };
