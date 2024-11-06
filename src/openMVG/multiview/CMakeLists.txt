@@ -43,10 +43,12 @@ target_link_libraries(openMVG_multiview
   PUBLIC
     openMVG_numeric
     openMVG_system
+    openMVG_features
 )
 target_link_libraries(openMVG_multiview
   LINK_PRIVATE
     openMVG_graph
+    openMVG_ceres
     ${CERES_LIBRARIES}
     ${OPENMVG_LIBRARY_DEPENDENCIES}
 )
