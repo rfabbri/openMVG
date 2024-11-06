@@ -334,6 +334,13 @@ TEST(SEQUENTIAL_SFM, OrientedSfM)
                                sfm_data_2.GetViews().at(2)->id_view,
                                sfm_data_2.GetViews().at(3)->id_view});
   sfmEngine.SetMaximumTrifocalRansacIterations(1);
+
+  // Summary:
+  // - match constraint = orientation
+  // - resection = P2Pt
+  // - intrinsics refinement = none (fixed)
+  // - camera unknown  = Pinhole
+  // - initialtriplet
   EXPECT_TRUE(sfmEngine.Process());
 
   const double dResidual = RMSE(sfmEngine.Get_SfM_Data());
