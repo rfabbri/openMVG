@@ -313,7 +313,7 @@ TEST(SEQUENTIAL_SFM, OrientedSfM)
   // Configure the features_provider & the matches_provider from the synthetic dataset
   std::shared_ptr<Features_Provider> feats_provider =
     std::make_shared<Synthetic_Oriented_Features_Provider>();
-  // Add a tiny noise in 2D observations to make data more realistic
+  // No noise is added in this test - perfect data
   dynamic_cast<Synthetic_Oriented_Features_Provider*>(feats_provider.get())->load(d);
 
   std::shared_ptr<Matches_Provider> matches_provider =
