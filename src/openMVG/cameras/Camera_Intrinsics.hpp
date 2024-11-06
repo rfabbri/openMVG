@@ -346,7 +346,7 @@ inline bool CheiralityTest
 )
 {
   assert(bearing.dot(pose(X)) > 0.0 == pose(X)(2) > 0.0);
-  return bearing.dot(pose(X)) > 0.0;
+  return pose(X)(2) > 0.0;
 }
 
 /**

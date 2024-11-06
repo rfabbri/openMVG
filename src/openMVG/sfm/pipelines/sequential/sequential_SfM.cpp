@@ -452,6 +452,7 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
   //    << "Trifocal Relative Pose residual from all inliers is: "
   //    << relativePose_info.found_residual_precision;
   // Bound min precision at 1 pix.
+  // TODO currently found_residual_precision is equal 4.0 = the input ransac trheshold
   relativePose_info.found_residual_precision = std::max(relativePose_info.found_residual_precision, 1.0);
 
   // ---------------------------------------------------------------------------
@@ -603,15 +604,15 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
           best_v1 = v1;
         }
       }
-    if (best_angle <= 2.0) // TODO: experiment to show that trifocal can accept
+    if (best_angle <= 2.0) // degrees. TODO: experiment to show that trifocal can accept
       continue;            // this angle as smaller than 2-view and get equal precision
 
     // reconstruct tangent from the best views and reproject into the 3rd.
     if (UseOrientedConstraint()) {
       unsigned third_v = 0*(best_v0 !=0 && best_v1 != 0) +
                          1*(best_v0 !=1 && best_v1 != 1) + 2*(best_v0 !=2 && best_v1 != 2);
-      Vec3 bearing0 = ((*cam[best_v0])(ob_x_ud[best_v0]));
-      Vec3 bearing1 = ((*cam[best_v1])(ob_x_ud[best_v1]));
+      Vec3 bearing0 = (*cam[best_v0])(ob_x_ud[best_v0]);
+      Vec3 bearing1 = (*cam[best_v1])(ob_x_ud[best_v1]);
       Vec3 tangent0;
       const cameras::Pinhole_Intrinsic *intr0 = dynamic_cast<const cameras::Pinhole_Intrinsic *>(cam[best_v0]); assert(intr0);
       { 
@@ -657,8 +658,8 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
       static constexpr bool ignore_distortion = true; // We ignore distortion for now
       double angular_error = cam[third_v]->residual_orientation(
             pose[third_v]->apply_to_orientation(T), 
-            tangent2, landmark.X/landmark.X(2), ignore_distortion);
-      static constexpr double angle_tol = 0.34;
+            tangent2, landmark.X/landmark.X(2), ignore_distortion); // range 0,pi
+      static constexpr double angle_tol = 0.34; // 20deg radian
       if (angular_error > angle_tol  && angular_error + angle_tol <= M_PI)
         continue;
     }
