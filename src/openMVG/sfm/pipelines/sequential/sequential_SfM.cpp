@@ -85,7 +85,8 @@ inline static void TriangulateTangent2View
   Vec3 &Tangent
 )
 {
-  Tangent = (R0.transpose()*tangent0.cross(bearing0)).cross(R1.transpose()*tangent1.cross(bearing1));
+  Tangent = (R0.transpose()*tangent0.cross(bearing0.normalized())).cross(R1.transpose()*tangent1.cross(bearing1.normalized()));
+  Tangent.normalize();
 }
 
 // Go through sfm_data and reconstructs all tangents
@@ -182,9 +183,6 @@ void SequentialSfMReconstructionEngine::ReconstructAllTangents()
      tangent1,
      li.T
    );
-   assert(li.T.norm() > 1e-10);
-   li.T.normalize();
-   assert(li.T.norm() > .99);
   } // end for each landmark
 }
 
@@ -644,8 +642,6 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
         tangent1,
         T
       );
-      assert(T.norm() > 1e-10);
-      T.normalize(); assert(T.norm() > .99);
 
       Vec2 tangent2;
       { 
