@@ -128,7 +128,7 @@ private:
   double logalpha0_;  // Alpha0 is used to make the error adaptive to the image size
   const cameras::IntrinsicBase * camera_;   // Intrinsic camera parameter
   bool UseOrientationConstraint_; // if we are using orientation to refine
-                                 // inliers and filte out outliers
+                                  // inliers and filter out outliers
 };
 } // namespace openMVG
 

@@ -671,7 +671,7 @@ MakeInitialTriplet3D(const Triplet &current_triplet)
   ComputeResidualsHistogram(&histoResiduals);
   if (!sLogging_file_.empty()) {
     using namespace htmlDocument;
-    html_doc_stream_->pushInfo(htmlMarkup("h1","Trifocal tensor."));
+    html_doc_stream_->pushInfo(htmlMarkup("h1","Trifocal tensor"));
     std::ostringstream os;
     os
       << "-------------------------------" << "<br>"
