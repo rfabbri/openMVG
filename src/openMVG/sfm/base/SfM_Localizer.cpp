@@ -101,13 +101,12 @@ public:
                x2d_.col(sample).tail(2), Xcam/Xcam(2), ignore_distortion);
          // about 15 degrees tolerance. TODO: make this a parameter
          static constexpr double angle_tol = 0.34;
-         if (angular_error < angle_tol  || angular_error + angle_tol > M_PI) // {
-           OPENMVG_LOG_INFO << "\tRansac-internal Resection view reprojection angle check PASS, using error as is";
-         else
+         if (angular_error < angle_tol  || angular_error + angle_tol > M_PI)  {
+           //  OPENMVG_LOG_INFO << "\tRansac-internal Resection view reprojection angle check PASS, using error as is";
+         } else {
            vec_errors[sample] = std::numeric_limits<double>::infinity();
-                  //         } else {
-                  //           OPENMVG_LOG_INFO << "\tRansac-internal Resection view reprojection angle filter out";
-                  //         }
+           //  OPENMVG_LOG_INFO << "\tRansac-internal Resection view reprojection angle filter out";
+         }
       }
     }
   }
