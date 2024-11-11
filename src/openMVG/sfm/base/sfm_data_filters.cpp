@@ -190,7 +190,6 @@ bool eraseObservationsWithMissingPoses
       const View * v = sfm_data.GetViews().at(ViewId).get();
       if (pose_Index.count(v->id_pose) == 0)
       {
-        std::cout << "XXXX removing obs due to pose "  << v->id_pose << std::endl;
         itObs = obs.erase(itObs);
         ++removed_elements;
       }
@@ -198,7 +197,6 @@ bool eraseObservationsWithMissingPoses
         ++itObs;
     }
     if (obs.empty() || obs.size() < min_points_per_landmark) {
-      std::cout << "XXXX2 removing obs"  << std::endl;
       itLandmarks = sfm_data.structure.erase(itLandmarks);
     } else
       ++itLandmarks;

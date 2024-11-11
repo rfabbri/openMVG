@@ -166,7 +166,7 @@ void SequentialSfMReconstructionEngine::ReconstructAllTangents()
 
    //- bearing: invert intrinsic
    Vec3 bearing0 = ((*intrinsics[best_v0])(ob[best_v0]->x));
-   Vec3 bearing1 = ((*intrinsics[best_v0])(ob[best_v1]->x));
+   Vec3 bearing1 = ((*intrinsics[best_v1])(ob[best_v1]->x));
 
    assert(obi[best_v0]->t.norm() > .99 && obi[best_v1]->t.norm() > .99);
    Vec3 tangent0, tangent1;
@@ -869,7 +869,7 @@ bool SequentialSfMReconstructionEngine::Resection(const uint32_t viewIndex)
 
   if (!bResection) return false;
 
-  // D. Refine the pose of the found camera.
+  // D. Refine the pose of the found camera ------------------------------------
   // We use a local scene with only the 3D points and the new camera,
   // and only for inliers.
   {
@@ -924,7 +924,7 @@ bool SequentialSfMReconstructionEngine::Resection(const uint32_t viewIndex)
       return false;
     }
 
-    // E. Update the global scene with:
+    // E. Update the global scene with: ----------------------------------------
     // - the new found camera pose
     sfm_data_.poses[view_I->id_pose] = pose;
     // - track the view's AContrario robust estimation found threshold
