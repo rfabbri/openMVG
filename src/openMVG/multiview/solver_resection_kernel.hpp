@@ -43,7 +43,7 @@ using PoseResectionKernel =
   two_view::kernel::Kernel<
     SixPointResectionSolver, // Model estimator
     resection::PixelReprojectionError, // Error metric
-    Mat34>;
+    Mat34, 2>;
 
 }  // namespace kernel
 }  // namespace resection

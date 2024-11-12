@@ -65,7 +65,9 @@ namespace kernel {
 // should append new solutions to the end.
 template<typename SolverArg,
          typename ErrorArg,
-         typename ModelArg = Mat3>
+         typename ModelArg = Mat3,
+         int ImagePointDim = 3
+         >
 class Kernel {
  public:
   Kernel(const Mat &x1, const Mat &x2) : x1_(x1), x2_(x2) {}
@@ -87,7 +89,7 @@ class Kernel {
   }
   /// Return the error associated to the model and sample^nth point
   double Error(uint32_t sample, const Model &model) const {
-    return ErrorArg::Error(model, x1_.col(sample).head(3), x2_.col(sample).head(3));
+    return ErrorArg::Error(model, x1_.col(sample).head(ImagePointDim), x2_.col(sample).head(3));
   }
   /// Number of putative point
   size_t NumSamples() const {

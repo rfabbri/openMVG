@@ -19,8 +19,6 @@
 using namespace openMVG;
 using namespace openMVG::cameras;
 
-#if 0
-
 TEST(Resection_Kernel_DLT, Multiview) {
 
   const int nViews = 3;
@@ -259,7 +257,6 @@ TEST(UP2PSolver_Kukelova, Multiview) {
     }
   }
 }
-#endif
 
 TEST(P2Pt_Fabbri_ECCV12, Multiview) 
 {

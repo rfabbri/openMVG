@@ -42,7 +42,7 @@ using l1PoseResectionKernel =
   two_view::kernel::Kernel<
     l1SixPointResectionSolver,
     l1SixPointResectionSolver,
-    Mat34>;
+    Mat34, 2>;
 
 }  // namespace kernel
 }  // namespace lInfinityCV
