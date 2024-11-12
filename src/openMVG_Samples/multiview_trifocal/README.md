@@ -220,4 +220,8 @@ Since your solver is using less points than some other solver, we could perhaps 
 
 # Export matches/tracks
 
+/Users/rfabbri/cprg/vxlprg/lemsvpe/openMVG/src/openMVG/matching
+ - see indMatch_test.cpp for the format of matches.txt
+ - you can also convert a matches.f.bin to matches.f.txt using a utility - matches connverter
+
 
