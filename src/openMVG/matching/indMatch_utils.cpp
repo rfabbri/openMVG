@@ -101,7 +101,7 @@ bool Save
         const auto& J = cur_match.first.second;
 
         const std::vector<IndMatch> & pair_matches = cur_match.second;
-        stream << I << " " << J << '\n' << pair_matches.size() << '\n';
+        stream << "matches pair: "<< I << " " << J << '\n' << "number of matches of pair: "<<pair_matches.size() << '\n';
         copy(pair_matches.cbegin(), pair_matches.cend(),
              std::ostream_iterator<IndMatch>(stream, "\n"));
       }
