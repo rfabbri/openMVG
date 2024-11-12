@@ -111,7 +111,7 @@ std::string Matches2SVGString
     // Draw the line between the corresponding feature positions
     svgStream << svg::drawLine(
       L.x(), L.y(),
-      R.x() + svg_offset_x, R.y() + svg_offset_y,
+      R.x() + svg_offset_x, R.y() + svg_offset_y,match_it.i_,match_it.j_,
       svg::svgAttributes().stroke(colors.back(), stroke_size));
   }
   // 2. Then display features circles
@@ -126,6 +126,15 @@ std::string Matches2SVGString
     svgStream << svg::drawCircle(
       R.x() + svg_offset_x, R.y() + svg_offset_y, feature_circle_radius,
       svg::svgAttributes().stroke(colors[i], stroke_size));
+  }
+  // Gabriel: 3. Display image id for better visulization
+  for (size_t i = 0; i < matches.size(); ++i) {
+    // Get back linked features
+    const features::PointFeature & L = left_features[matches[i].i_];
+    const features::PointFeature & R = right_features[matches[i].j_];
+    // Draw the features (text)
+    svgStream << svg::drawText(L.x(), L.y(),6.0f, std::to_string(matches[i].i_));
+    svgStream << svg::drawText(R.x() + svg_offset_x, R.y() + svg_offset_y,6.0f, std::to_string(matches[i].j_));
   }
   return svgStream.closeSvgFile().str();
 }
