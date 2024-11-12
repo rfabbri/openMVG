@@ -40,6 +40,14 @@ static std::string drawLine(float ax, float ay, float bx, float by, const svgAtt
   return os.str();
 }
 
+// Gabriel: Overloading draw line for adding feature id. 
+static std::string drawLine(float ax, float ay, float bx, float by, int featid1, int featid2 ,const svgAttributes & style)
+{
+  std::ostringstream os;
+  os <<
+    "<polyline points=\""<< ax << "," << ay << "," << bx << "," << by <<"\" point_ids=\"" << featid1 << "," << featid2 << "\""<< style.getSvgStream() +  (style.bTooltip() ? "</polyline>" : "/>\n");
+  return os.str();
+}
 ///Reference to an image (path must be relative to the svg file)
 static std::string drawImage(const std::string & simagePath, int W, int H,
   int posx = 0, int posy = 0, float opacity =1.f)
