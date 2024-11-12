@@ -83,6 +83,9 @@ private:
   // consistency checks for oriented datastructures that run parallel to
   // the usual landmarks/observations 
   bool ConsistencyCheckOriented() const;
+
+  /// Discard track with too large residual error
+  bool badTrackRejector(double dPrecision, size_t count = 0);
 };
 
 } // namespace sfm

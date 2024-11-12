@@ -218,3 +218,6 @@ Adding code in this engine could be simpler since you have to inherit and write 
 5. Bootstrap GlobalSfM
 Since your solver is using less points than some other solver, we could perhaps have better results (more stable, and less outliers triplets)
 
+# Export matches/tracks
+
+

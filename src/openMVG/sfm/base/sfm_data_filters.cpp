@@ -50,26 +50,21 @@ IndexT RemoveOutliers_PixelResidualError
   {
     Observations & obs = iterTracks->second.obs;
     Observations::iterator itObs = obs.begin();
-//    LandmarkInfo *li;
-//    if (sfm_data.is_oriented())
-//      li = &sfm_data.info.at(iterTracks->first); // [lit.first] but const
     while (itObs != obs.end())
     {
       const View * view = sfm_data.views.at(itObs->first).get();
       const geometry::Pose3 pose = sfm_data.GetPoseOrDie(view);
       const cameras::IntrinsicBase * intrinsic = sfm_data.intrinsics.at(view->id_intrinsic).get();
       const Vec2 residual = intrinsic->residual(pose(iterTracks->second.X), itObs->second.x);
+
       if (residual.norm() > dThresholdPixel)
       {
         ++outlier_count;
-//        if (sfm_data.is_oriented())
-//          li->obs_info.erase(itObs->first);
         itObs = obs.erase(itObs);
       }
       else
         ++itObs;
     }
-    // assert (!sfm_data.is_oriented() || (sfm_data.is_oriented() && obs.size() == li->obs_info.size()));
     if (obs.empty() || obs.size() < minTrackLength)
       iterTracks = sfm_data.structure.erase(iterTracks);
     else
@@ -77,6 +72,53 @@ IndexT RemoveOutliers_PixelResidualError
   }
   return outlier_count;
 }
+
+
+// Remove tracks that have a high reprojection error in any view
+// Return the number of removed tracks
+IndexT RemoveOutliers_TangentOrientationResidualError
+(
+  SfM_Data & sfm_data,
+  const double dThresholdTangentOrientationAngle,
+  const unsigned int minTrackLength
+)
+{
+  IndexT outlier_count = 0;
+  Landmarks::iterator iterTracks = sfm_data.structure.begin();
+  while (iterTracks != sfm_data.structure.end())
+  {
+    Observations &obs = iterTracks->second.obs;
+    LandmarkInfo &li = sfm_data.info.at(iterTracks->first); // [lit.first] but const
+    ObservationsInfo &info_obs = li.obs_info;
+
+    Observations::iterator itObs = obs.begin();
+    while (itObs != obs.end()) {
+      const View *view = sfm_data.views.at(itObs->first).get();
+      const geometry::Pose3 pose = sfm_data.GetPoseOrDie(view);
+      const cameras::IntrinsicBase *intrinsic = sfm_data.intrinsics.at(view->id_intrinsic).get();
+
+      // project tangent, measure error
+      static constexpr bool ignore_distortion = true; // We ignore distortion for now
+      Vec3 Xcam = pose(iterTracks->second.X);
+      double angular_error = intrinsic->residual_orientation(
+            pose.apply_to_orientation(li.T),
+            info_obs[itObs->first].t, Xcam/Xcam(2), ignore_distortion); // range 0,pi
+      if (angular_error > dThresholdTangentOrientationAngle
+          && angular_error + dThresholdTangentOrientationAngle <= M_PI) {
+        ++outlier_count;
+        info_obs.erase(itObs->first);
+        itObs = obs.erase(itObs);
+      } else
+        ++itObs;
+    }
+    if (obs.empty() || obs.size() < minTrackLength)
+      iterTracks = sfm_data.structure.erase(iterTracks);
+    else
+      ++iterTracks;
+  }
+  return outlier_count;
+}
+
 
 // Remove tracks that have a small angle (tracks with tiny angle leads to instable 3D points)
 // Return the number of removed tracks

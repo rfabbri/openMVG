@@ -59,6 +59,15 @@ IndexT RemoveOutliers_AngleError
   const double dMinAcceptedAngle
 );
 
+// Remove tracks that have a large reprojection angle of tangent/feature orientation
+// Return the number of removed tracks
+IndexT RemoveOutliers_TangentOrientationResidualError
+(
+  SfM_Data & sfm_data,
+  const double dThresholdTangentOrientationAngle,
+  const unsigned int minTrackLength
+);
+
 /// Erase pose with insufficient track observations
 bool eraseMissingPoses
 (

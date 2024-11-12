@@ -1197,6 +1197,29 @@ bool SequentialSfMReconstructionEngine::MakeInitialSeedReconstruction()
   return true;
 }
 
+/**
+ * @brief Discard tracks with too large residual error
+ *
+ * Remove observation/tracks that have:
+ *  - too large residual error
+ *  - too small angular value
+ *
+ * @return True if more than 'count' outliers have been removed.
+ */
+bool SequentialSfMReconstructionEngine::badTrackRejector(double dPrecision, size_t count)
+{
+  const size_t nbOutliers_residualErr = RemoveOutliers_PixelResidualError(sfm_data_, dPrecision, 2);
+  const size_t nbOutliers_angleErr = RemoveOutliers_AngleError(sfm_data_, 2.0);
+
+  size_t nbOutliers_orientationErr = 0;
+  if (UseOrientedConstraint()) {
+    ReconstructAllTangents();
+    nbOutliers_orientationErr = RemoveOutliers_TangentOrientationResidualError(sfm_data_, 0.34 /* 20deg rad */, 2);
+  }
+
+  return (nbOutliers_residualErr + nbOutliers_angleErr + nbOutliers_orientationErr) > count;
+}
+
 
 } // namespace sfm
 } // namespace openMVG

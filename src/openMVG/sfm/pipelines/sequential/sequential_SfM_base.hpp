@@ -111,9 +111,6 @@ protected:
   /// Bundle adjustment to refine Structure; Motion and Intrinsics
   bool BundleAdjustment();
 
-  /// Discard track with too large residual error
-  bool badTrackRejector(double dPrecision, size_t count = 0);
-
   bool using_initial_triple() { return std::get<2>(initial_triplet_) != 0; }
 
   //----

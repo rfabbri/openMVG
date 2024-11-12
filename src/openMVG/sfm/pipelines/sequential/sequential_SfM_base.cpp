@@ -742,23 +742,6 @@ struct sort_pair_second {
   }
 };
 
-/**
- * @brief Discard tracks with too large residual error
- *
- * Remove observation/tracks that have:
- *  - too large residual error
- *  - too small angular value
- *
- * @return True if more than 'count' outliers have been removed.
- */
-bool SequentialSfMReconstructionEngineBase::badTrackRejector(double dPrecision, size_t count)
-{
-  const size_t nbOutliers_residualErr = RemoveOutliers_PixelResidualError(sfm_data_, dPrecision, 2);
-  const size_t nbOutliers_angleErr = RemoveOutliers_AngleError(sfm_data_, 2.0);
-  // TODO: orientation
-
-  return (nbOutliers_residualErr + nbOutliers_angleErr) > count;
-}
 
 void SequentialSfMReconstructionEngineBase::FinalStatistics()
 {
